@@ -644,12 +644,52 @@ maybe_shQuote <- function(x) {
 }
 
 
-rm_all_reticulate_state <- function() {
-  unlink(user_data_dir("r-reticulate", NULL), recursive = TRUE, force = TRUE)
-  unlink(user_data_dir("r-miniconda", NULL), recursive = TRUE, force = TRUE)
-  unlink(user_data_dir("r-miniconda-arm64", NULL), recursive = TRUE, force = TRUE)
-  unlink(miniconda_path_default(), recursive = TRUE, force = TRUE)
+rm_all_reticulate_state <- function(external = FALSE) {
+
+  rm_rf <- function(...)
+    unlink(path.expand(c(...)), recursive = TRUE, force = TRUE)
+
+  if (external) {
+    if (!is.null(uv <- uv_binary(FALSE))) {
+      system2(uv, c("cache", "clean"))
+      rm_rf(system2(uv, c("python", "dir"),
+                    env = "NO_COLOR=1", stdout = TRUE))
+      rm_rf(system2(uv, c("tool", "dir"),
+                    env = "NO_COLOR=1", stdout = TRUE))
+    }
+
+    if (nzchar(Sys.which("pip3")))
+      system2("pip3", c("cache", "purge"))
+  }
+
+  rm_rf(user_data_dir("r-reticulate", NULL))
+  rm_rf(user_data_dir("r-miniconda", NULL))
+  rm_rf(user_data_dir("r-miniconda-arm64", NULL))
+  rm_rf(rappdirs::user_cache_dir("r-reticulate", NULL))
+  rm_rf(miniconda_path_default())
+  rm_rf(virtualenv_path("r-reticulate"))
+  for (venv in virtualenv_list()) {
+    if (startsWith(venv, "r-"))
+      virtualenv_remove(venv, confirm = FALSE)
+  }
+  rm_rf(reticulate_cache_dir())
+  try(tools::R_user_dir("reticulate", "cache"))
+  try(tools::R_user_dir("reticulate", "data"))
+  try(tools::R_user_dir("reticulate", "config"))
+  invisible()
 }
+
+
+reticulate_cache_dir <- function(...) {
+  root <- if (getRversion() > "4.0") {
+    tools::R_user_dir("reticulate", "cache")
+  } else {
+    path.expand(rappdirs::user_cache_dir("r-reticulate", NULL))
+  }
+
+  file.path(root, ...)
+}
+
 
 
 user_data_dir <- function(...) {
@@ -685,3 +725,23 @@ expand_env_vars <- function(x) {
 }
 
 `%""%` <- function(x, y) if(identical(x, "")) y else x
+
+parent.pkg <- function(env = parent.frame(2)) {
+  if (isNamespace(env <- topenv(env)))
+    as.character(getNamespaceName(env)) # unname
+  else
+    NULL # print visible
+}
+
+warn_and_return <- function(..., call. = TRUE) {
+  cond <- if (inherits(..1, "condition")) {
+    ..1
+  } else {
+    simpleWarning(.makeMessage(...))
+  }
+
+  cond$call <- if (call.) sys.call(-1L) else NULL
+
+  warning(cond)
+  rlang::eval_bare(quote(return(invisible())), parent.frame())
+}

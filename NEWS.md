@@ -1,8 +1,18 @@
 # reticulate (development version)
 
+- New `py_require()` function for declaring Python requirements for the current R session.
+
+- New `uv_run_tool()` function for running command line tools distributed via Python packages.
+
+- Raw R arrays now convert to NumPy arrays with dtype "V1" ("void8") (#1734).
+  Use `r_to_py(as.array(x))` to efficiently convert raw vectors to numpy arrays.
+
+- NumPy arrays with dtype "V1" ("void8") now convert to R raw arrays (#1734).
+  Use `py_to_r(array$view("V1"))` to efficiently convert numpy arrays to raw vectors. 
+
 - Fixed an issue with using Python 3.12 on Linux (#1712, #1714).
 
-- Fixed an issue where `virtualenv_starter()` would not discover a 
+- Fixed an issue where `virtualenv_starter()` would not discover a
   custom built Python (#1704).
 
 # reticulate 1.40.0
@@ -26,7 +36,7 @@
 - Fixed error when attempting to use a python venv created with `uv` (#1678)
 
 - Resolved an issue where `py_discover_config()` attempted to detect
-  Windows App Store Python installations. These are now excluded from 
+  Windows App Store Python installations. These are now excluded from
   discovery by both `py_discover_config()` and `virtualenv_starter()` (#1656, #1673).
 
 - Fixed an error when converting an empty NumPy char array to R (#1662).
@@ -35,10 +45,10 @@
 
 - Fixed a segfault encountered when running the Python session finalizer (#1663, #1664).
 
-- Resolved a segfault in RStudio when rapidly switching between 
+- Resolved a segfault in RStudio when rapidly switching between
   R and Python chunks in a Quarto document (#1665).
 
-- Improved behavior when the conda binary used to create an environment 
+- Improved behavior when the conda binary used to create an environment
   cannot be resolved (contributed by @tl-hbk, #1654, #1659).
 
 - Added Positron support for the Variables Pane and `repl_python()`

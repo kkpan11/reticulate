@@ -10,6 +10,10 @@ development:
 
 reference:
 
+  - title: "Python Requirements"
+    contents:
+      - py_require
+
   - title: "Python Execution"
     contents:
       - import
@@ -95,6 +99,7 @@ reference:
       - configure_environment
       - conda-tools
       - conda_run2
+      - uv_run_tool
 
   - title: "Miniconda"
     contents:
